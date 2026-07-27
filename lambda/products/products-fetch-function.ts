@@ -8,6 +8,8 @@ export async function handler(
   event: APIGatewayProxyEvent,
   context: Context,
 ): Promise<APIGatewayProxyResult> {
+  const { awsRequestId } = context;
+  const { requestId } = event.requestContext;
   const { httpMethod: method, resource } = event;
   if (resource === "/products") {
     if (method === "GET") {
