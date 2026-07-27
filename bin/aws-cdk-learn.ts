@@ -1,20 +1,39 @@
 #!/usr/bin/env node
-import * as cdk from 'aws-cdk-lib/core';
-import { AwsCdkLearnStack } from '../lib/aws-cdk-learn-stack';
+import * as cdk from "aws-cdk-lib/core";
+import { ProductsAppStack } from "../lib/products-app-stack";
+import { ECommerceApiStack } from "../lib/ecommerce-api-stack";
+import { ECommerceSingleStack } from "../lib/ecommerce-single-stack";
 
 const app = new cdk.App();
-new AwsCdkLearnStack(app, 'AwsCdkLearnStack', {
-  /* If you don't specify 'env', this stack will be environment-agnostic.
-   * Account/Region-dependent features and context lookups will not work,
-   * but a single synthesized template can be deployed anywhere. */
+const env: cdk.Environment = {
+  account: "000000000000",
+  region: "us-east-1",
+};
+const tags = {
+  const: "ECommerce",
+};
 
-  /* Uncomment the next line to specialize this stack for the AWS Account
-   * and Region that are implied by the current CLI configuration. */
-  // env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+// Local deploys (MiniStack/LocalStack) can struggle to resolve
+// cross-stack references, so the multi-stack pattern is swapped for a
+// single-stack one there. Toggle with `-c singleStack=true`, e.g.:
+//   npx cdklocal deploy -c singleStack=true --all
+const useSingleStack = app.node.tryGetContext("singleStack") === "true";
 
-  /* Uncomment the next line if you know exactly what Account and Region you
-   * want to deploy the stack to. */
-  // env: { account: '123456789012', region: 'us-east-1' },
+if (useSingleStack) {
+  new ECommerceSingleStack(app, "ECommerce", {
+    tags,
+    env,
+  });
+} else {
+  const productsAppStack = new ProductsAppStack(app, "ProductsApp", {
+    tags,
+    env,
+  });
 
-  /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
-});
+  const eCommerceApiStack = new ECommerceApiStack(app, "ECommerceApi", {
+    productsFetchHandler: productsAppStack.productsFetchHandler,
+    tags,
+    env,
+  });
+  eCommerceApiStack.addStackDependency(productsAppStack);
+}
