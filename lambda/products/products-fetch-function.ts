@@ -11,6 +11,10 @@ export async function handler(
   const { awsRequestId } = context;
   const { requestId } = event.requestContext;
   const { httpMethod: method, resource } = event;
+
+  console.log(
+    `API Gateway RequestId: ${awsRequestId}, Lambda RequestId ${requestId}`,
+  );
   if (resource === "/products") {
     if (method === "GET") {
       return {
