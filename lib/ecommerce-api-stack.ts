@@ -6,6 +6,7 @@ import { Construct } from "constructs";
 
 interface ECommerceApiStackProps extends cdk.StackProps {
   productsFetchHandler: lambdaNodeJS.NodejsFunction;
+  isLocal: boolean;
 }
 
 export class ECommerceApiStack extends cdk.Stack {
@@ -18,6 +19,7 @@ export class ECommerceApiStack extends cdk.Stack {
       restApiName: "ecommerce-api",
       cloudWatchRole: true,
       deployOptions: {
+        stageName: props.isLocal ? "local" : "prod",
         accessLogDestination: new apigateway.LogGroupLogDestination(logGroup),
         accessLogFormat: apigateway.AccessLogFormat.jsonWithStandardFields({
           httpMethod: true,
@@ -40,5 +42,15 @@ export class ECommerceApiStack extends cdk.Stack {
     // /products
     const productsResource = api.root.addResource("products");
     productsResource.addMethod("GET", productsFetchIntegration);
+
+    if (props.isLocal) {
+      new cdk.CfnOutput(this, "RestApiId", {
+        value: api.restApiId,
+      });
+
+      new cdk.CfnOutput(this, "RestApiInvokeUrl", {
+        value: `http://localhost:4566/restapis/${api.restApiId}/${api.deploymentStage.stageName}/_user_request_`,
+      });
+    }
   }
 }

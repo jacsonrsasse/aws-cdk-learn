@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import "dotenv/config";
 import * as cdk from "aws-cdk-lib/core";
 import { ProductsAppStack } from "../lib/products-app-stack";
 import { ECommerceApiStack } from "../lib/ecommerce-api-stack";
@@ -11,6 +12,7 @@ const env: cdk.Environment = {
 const tags = {
   const: "ECommerce",
 };
+const isLocal = process.env.STAGE === "local";
 
 const productsAppStack = new ProductsAppStack(app, "ProductsApp", {
   tags,
@@ -19,6 +21,7 @@ const productsAppStack = new ProductsAppStack(app, "ProductsApp", {
 
 const eCommerceApiStack = new ECommerceApiStack(app, "ECommerceApi", {
   productsFetchHandler: productsAppStack.productsFetchHandler,
+  isLocal,
   tags,
   env,
 });
